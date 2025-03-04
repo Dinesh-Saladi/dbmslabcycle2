@@ -1,0 +1,306 @@
+-- Create AIRPORT table
+CREATE TABLE AIRPORT (
+    Airport_code VARCHAR2(10) PRIMARY KEY,
+    City VARCHAR2(50),
+    State VARCHAR2(2),
+    Name VARCHAR2(100)
+);
+
+-- Create AIRPLANE_TYPE table
+CREATE TABLE AIRPLANE_TYPE (
+    Company VARCHAR2(100),
+    Type_name VARCHAR2(50) PRIMARY KEY,
+    Max_seats NUMBER
+);
+
+-- Create AIRPORT_AIRPLANE_TYPE (for CAN_LAND many-to-many relationship)
+CREATE TABLE AIRPORT_AIRPLANE_TYPE (
+    Airport_code VARCHAR2(10),
+    Type_name VARCHAR2(50),
+    PRIMARY KEY (Airport_code, Type_name),
+    FOREIGN KEY (Airport_code) REFERENCES AIRPORT(Airport_code),
+    FOREIGN KEY (Type_name) REFERENCES AIRPLANE_TYPE(Type_name)
+);
+
+-- Create AIRPLANE table (1-to-N with AIRPLANE_TYPE)  
+-- 'type' relationship merged with airplane since 'type' doesnt have any attr..
+CREATE TABLE AIRPLANE (
+    Airplane_id VARCHAR2(20) PRIMARY KEY,
+    Total_no_of_seats NUMBER,
+    Type_name VARCHAR2(50),
+    FOREIGN KEY (Type_name) REFERENCES AIRPLANE_TYPE(Type_name)
+);
+
+
+-- Create FLIGHT table
+CREATE TABLE FLIGHT (
+    Number VARCHAR2(10) PRIMARY KEY,
+    Airline VARCHAR2(50),
+    Weekdays VARCHAR2(50)
+);
+
+-- Create FLIGHT_LEG table (1-to-N with FLIGHT via LEGS, with attributes)
+-- 'legs' relationship is merged with FLIGHT_LEG
+CREATE TABLE FLIGHT_LEG(
+    Flight_Number VARCHAR2(10),
+    Leg_no VARCHAR2(10),
+    PRIMARY KEY (Flight_Number, Leg_no),
+    FOREIGN KEY (Flight_Number) REFERENCES FLIGHT(Number)
+);
+
+CREATE TABLE DEPARTURE_AIRPORT(
+    Scheduled_dep_time DATE,
+    Departure_Airport_code VARCHAR2(10),
+    Flight_Number VARCHAR2(10),
+    Leg_no VARCHAR2(10),
+    FOREIGN KEY (Departure_Airport_code) REFERENCES AIRPORT(Airport_code),
+    FOREIGN KEY (Flight_Number, Leg_no) REFERENCES FLIGHT_LEG(Flight_Number, Leg_no),
+    PRIMARY KEY (Departure_Airport_code , Flight_Number , Leg_no)
+);
+
+CREATE TABLE ARRIVAL_AIRPORT(
+    Scheduled_arr_time DATE,
+    Arrival_Airport_code VARCHAR2(10),
+    Flight_Number VARCHAR2(10),
+    Leg_no VARCHAR2(10),
+    FOREIGN KEY (Arrival_Airport_code) REFERENCES AIRPORT(Airport_code),
+    FOREIGN KEY (Flight_Number, Leg_no) REFERENCES FLIGHT_LEG(Flight_Number, Leg_no),
+    PRIMARY KEY (Arrival_Airport_code , Flight_Number , Leg_no)
+);
+
+-- Create FARE table (1-to-N with FLIGHT via FARES, no additional attributes)
+-- 'fares' relationship merged with FARE entity
+CREATE TABLE FARE (
+    Restrictions VARCHAR2(200),
+    Code VARCHAR2(10) ,
+    Amount NUMBER,
+   
+    Flight_Number VARCHAR2(10),
+    FOREIGN KEY (Flight_Number) REFERENCES FLIGHT(Number),
+    PRIMARY KEY (Code , Flight_Number)
+);
+
+CREATE TABLE DEPARTS(
+    Dep_time DATE ,
+    Airport_code VARCHAR2(10),
+    Datee DATE ,
+    FOREIGN KEY Datee REFERENCES LEG_INSTANCE(Datee),
+    FOREIGN KEY Airport_code REFERENCES AIRPORT(Airport_code),
+    PRIMARY KEY (Airport_code , Datee )
+);
+
+CREATE TABLE ARRIVES(
+    Arr_time DATE ,
+    Airport_code VARCHAR2(10),
+    Datee DATE ,
+    FOREIGN KEY Datee REFERENCES LEG_INSTANCE(Datee),
+    FOREIGN KEY Airport_code REFERENCES AIRPORT(Airport_code),
+    PRIMARY KEY (Airport_code , Datee )
+);
+-- Create LEG_INSTANCE table (1-to-N with AIRPLANE via ASSIGNED, no additional attributes)
+CREATE TABLE LEG_INSTANCE (
+    Datee DATE,
+    No_of_avail_seats NUMBER, 
+    Flight_Number VARCHAR2(10),
+    Leg_no VARCHAR2(10),
+    Airplane_id VARCHAR2(20),
+    PRIMARY KEY (Flight_Number,Leg_no, Airplane_id,Datee),
+    FOREIGN KEY (Flight_Number, Leg_no) REFERENCES FLIGHT_LEG(Flight_Number, Leg_no),
+    FOREIGN KEY (Airplane_id) REFERENCES AIRPLANE(Airplane_id)
+);
+
+-- Create SEAT table
+CREATE TABLE SEAT (
+    DAtee DATE ,
+    Seat_no VARCHAR2(10) ,
+    Flight_Number VARCHAR2(10),
+    Leg_no VARCHAR2(10),
+    Airplane_id VARCHAR2(20),
+    FOREIGN KEY (Flight_Number,Leg_no, Airplane_id,Datee) REFERENCES LEG_INSTANCE(Flight_Number,Leg_no, Airplane_id,Datee),
+    PRIMARY KEY (Flight_Number,Leg_no, Airplane_id,Datee, Seat_no)
+);
+
+
+-- Create RESERVATION table (1-to-N with INSTANCE_OF, CUSTOMER, and SEAT)
+CREATE TABLE RESERVATION (
+    Customer_name VARCHAR2(50),
+    Seat_no VARCHAR2(10),
+    Cphone VARCHAR2(15),
+    Datee DATE ,
+    FOREIGN KEY Datee REFERENCES LEG_INSTANCE(Datee),
+    FOREIGN KEY (Seat_no) REFERENCES SEAT(Seat_no),
+    PRIMARY KEY (Datee , Seat_no)
+);
+
+
+
+
+values👇🏿
+
+-- Insert into AIRPORT
+INSERT INTO AIRPORT VALUES ('JFK', 'New York', 'NY', 'John F. Kennedy International');
+INSERT INTO AIRPORT VALUES ('LAX', 'Los Angeles', 'CA', 'Los Angeles International');
+INSERT INTO AIRPORT VALUES ('BOM', 'Mumbai', 'MH', 'Chhatrapati Shivaji Maharaj International');
+INSERT INTO AIRPORT VALUES ('DEL', 'Delhi', 'DL', 'Indira Gandhi International');
+
+-- Insert into AIRPLANE_TYPE
+INSERT INTO AIRPLANE_TYPE VALUES ('Boeing', '737', 180);
+INSERT INTO AIRPLANE_TYPE VALUES ('Airbus', 'A320', 220);
+INSERT INTO AIRPLANE_TYPE VALUES ('Airbus', 'A380', 400);
+
+-- Insert into AIRPORT_AIRPLANE_TYPE
+INSERT INTO AIRPORT_AIRPLANE_TYPE VALUES ('JFK', '737');
+INSERT INTO AIRPORT_AIRPLANE_TYPE VALUES ('BOM', 'A320');
+INSERT INTO AIRPORT_AIRPLANE_TYPE VALUES ('DEL', 'A380');
+
+-- Insert into AIRPLANE
+INSERT INTO AIRPLANE VALUES ('AIRBUS123', 220, 'A320');
+INSERT INTO AIRPLANE VALUES ('BOEING737', 180, '737');
+
+-- Insert into FLIGHT
+INSERT INTO FLIGHT VALUES ('FL001', 'Air India', 'Mon,Tue,Wed,Thu,Fri,Sat,Sun');
+INSERT INTO FLIGHT VALUES ('FL002', 'Indigo', 'Mon,Wed,Fri');
+INSERT INTO FLIGHT VALUES ('FL003', 'Emirates', 'Sat,Sun');
+
+-- Insert into FLIGHT_LEG
+INSERT INTO FLIGHT_LEG VALUES ('FL001', '1');
+INSERT INTO FLIGHT_LEG VALUES ('FL002', '1');
+INSERT INTO FLIGHT_LEG VALUES ('FL003', '1');
+
+-- Insert into LEG_INSTANCE
+INSERT INTO LEG_INSTANCE VALUES (TO_DATE('01-01-2014', 'DD-MM-YYYY'), 150, 'FL001', '1', 'AIRBUS123');
+INSERT INTO LEG_INSTANCE VALUES (TO_DATE('01-01-2014', 'DD-MM-YYYY'), 180, 'FL002', '1', 'BOEING737');
+
+-- Insert into SEAT
+INSERT INTO SEAT VALUES (TO_DATE('01-01-2014', 'DD-MM-YYYY'), '1A', 'FL001', '1', 'AIRBUS123');
+INSERT INTO SEAT VALUES (TO_DATE('01-01-2014', 'DD-MM-YYYY'), '1B', 'FL001', '1', 'AIRBUS123');
+
+-- Insert into RESERVATION
+INSERT INTO RESERVATION VALUES ('John Doe', '1A', '9876543210', TO_DATE('01-01-2014', 'DD-MM-YYYY'));
+INSERT INTO RESERVATION VALUES ('Jane Doe', '1B', '9876543211', TO_DATE('01-01-2014', 'DD-MM-YYYY'));
+
+-- Insert into FARE
+INSERT INTO FARE VALUES ('Non-refundable', 'F001', 5000, 'FL001');
+INSERT INTO FARE VALUES ('Refundable', 'F002', 4500, 'FL002');
+INSERT INTO FARE VALUES ('Discounted', 'F003', 4000, 'FL003');
+
+-- Insert into DEPARTURE_AIRPORT
+INSERT INTO DEPARTURE_AIRPORT VALUES (TO_DATE('01-01-2014 17:30', 'DD-MM-YYYY HH24:MI'), 'JFK', 'FL001', '1');
+
+-- Insert into ARRIVAL_AIRPORT
+INSERT INTO ARRIVAL_AIRPORT VALUES (TO_DATE('01-01-2014 20:00', 'DD-MM-YYYY HH24:MI'), 'LAX', 'FL001', '1');
+
+
+Queries👇🏿👇🏿
+
+SQL Queries for Given Questions
+Find the customer name who reserved the maximum number of seats.
+sql
+Copy
+Edit
+SELECT Customer_name
+FROM RESERVATION
+GROUP BY Customer_name
+ORDER BY COUNT(Seat_no) DESC
+FETCH FIRST 1 ROWS ONLY;
+Find flight numbers of all flights that can be used on non-stop flights from B to M.
+sql
+Copy
+Edit
+SELECT FLIGHT_LEG.Flight_Number
+FROM FLIGHT_LEG
+JOIN DEPARTURE_AIRPORT DA ON FLIGHT_LEG.Flight_Number = DA.Flight_Number
+JOIN ARRIVAL_AIRPORT AA ON FLIGHT_LEG.Flight_Number = AA.Flight_Number
+WHERE DA.Departure_Airport_code = 'B' AND AA.Arrival_Airport_code = 'M';
+Find the flight number which charges the lowest fare from city A to city B.
+sql
+Copy
+Edit
+SELECT F.Flight_Number
+FROM FARE F
+JOIN FLIGHT_LEG FL ON F.Flight_Number = FL.Flight_Number
+JOIN DEPARTURE_AIRPORT DA ON FL.Flight_Number = DA.Flight_Number
+JOIN ARRIVAL_AIRPORT AA ON FL.Flight_Number = AA.Flight_Number
+WHERE DA.Departure_Airport_code = 'A' AND AA.Arrival_Airport_code = 'B'
+ORDER BY F.Amount ASC
+FETCH FIRST 1 ROWS ONLY;
+Find all flights running every day from city A to city B.
+sql
+Copy
+Edit
+SELECT DISTINCT F.Number
+FROM FLIGHT F
+JOIN FLIGHT_LEG FL ON F.Number = FL.Flight_Number
+JOIN DEPARTURE_AIRPORT DA ON FL.Flight_Number = DA.Flight_Number
+JOIN ARRIVAL_AIRPORT AA ON FL.Flight_Number = AA.Flight_Number
+WHERE DA.Departure_Airport_code = 'A' 
+AND AA.Arrival_Airport_code = 'B'
+AND F.Weekdays LIKE '%Mon%'
+AND F.Weekdays LIKE '%Tue%'
+AND F.Weekdays LIKE '%Wed%'
+AND F.Weekdays LIKE '%Thu%'
+AND F.Weekdays LIKE '%Fri%'
+AND F.Weekdays LIKE '%Sat%'
+AND F.Weekdays LIKE '%Sun%';
+Find all flights departing from City X.
+sql
+Copy
+Edit
+SELECT FL.Flight_Number
+FROM DEPARTURE_AIRPORT DA
+JOIN AIRPORT A ON DA.Departure_Airport_code = A.Airport_code
+WHERE A.City = 'X';
+Find all flights having more than 200 seats.
+sql
+Copy
+Edit
+SELECT A.Airplane_id
+FROM AIRPLANE A
+WHERE A.Total_no_of_seats > 200;
+Find how many passengers traveled from city X on 01-01-2014.
+sql
+Copy
+Edit
+SELECT COUNT(DISTINCT R.Customer_name) AS Total_Passengers
+FROM RESERVATION R
+JOIN LEG_INSTANCE LI ON R.Datee = LI.Datee
+JOIN DEPARTURE_AIRPORT DA ON LI.Flight_Number = DA.Flight_Number
+JOIN AIRPORT A ON DA.Departure_Airport_code = A.Airport_code
+WHERE A.City = 'X' AND R.Datee = TO_DATE('01-01-2014', 'DD-MM-YYYY');
+Find flight names departing between 5 PM to 8 PM at city X.
+sql
+Copy
+Edit
+SELECT F.Airline
+FROM FLIGHT F
+JOIN DEPARTURE_AIRPORT DA ON F.Number = DA.Flight_Number
+JOIN AIRPORT A ON DA.Departure_Airport_code = A.Airport_code
+WHERE A.City = 'X' 
+AND TO_CHAR(DA.Scheduled_dep_time, 'HH24:MI') BETWEEN '17:00' AND '20:00';
+Find the company name that designed the flight AIRBUS123.
+sql
+Copy
+Edit
+SELECT AT.Company
+FROM AIRPLANE A
+JOIN AIRPLANE_TYPE AT ON A.Type_name = AT.Type_name
+WHERE A.Airplane_id = 'AIRBUS123';
+Find the total number of hours traveled by flight AIRBUS123.
+sql
+Copy
+Edit
+SELECT SUM((AA.Scheduled_arr_time - DA.Scheduled_dep_time) * 24) AS Total_Hours
+FROM DEPARTURE_AIRPORT DA
+JOIN ARRIVAL_AIRPORT AA ON DA.Flight_Number = AA.Flight_Number
+WHERE DA.Flight_Number IN (SELECT Flight_Number FROM LEG_INSTANCE WHERE Airplane_id = 'AIRBUS123');
+
+
+
+
+
+
+
+
+
+
+
